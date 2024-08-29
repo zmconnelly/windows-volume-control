@@ -1,22 +1,25 @@
 use session::{ApplicationSession, EndPointSession, Session};
+use std::process::exit;
 use windows::{
     core::Interface,
     Win32::{
         Media::Audio::{
-            eMultimedia, eRender, Endpoints::IAudioEndpointVolume, IAudioSessionControl,
-            IAudioSessionControl2, IAudioSessionEnumerator, IAudioSessionManager2, IMMDevice,
-            IMMDeviceEnumerator, ISimpleAudioVolume, MMDeviceEnumerator,
+            eMultimedia, eRender, Endpoints::IAudioEndpointVolume, IAudioSessionControl, IAudioSessionControl2,
+            IAudioSessionEnumerator, IAudioSessionManager2, IMMDevice, IMMDeviceEnumerator, ISimpleAudioVolume,
+            MMDeviceEnumerator,
         },
         System::{
-            Com::{CoCreateInstance, CoInitializeEx, CLSCTX_INPROC_SERVER, COINIT_MULTITHREADED, CLSCTX_ALL, COINIT_APARTMENTTHREADED},
+            Com::{
+                CoCreateInstance, CoInitializeEx, CLSCTX_ALL, CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED,
+                COINIT_MULTITHREADED,
+            },
             ProcessStatus::K32GetProcessImageFileNameA,
             Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ},
         },
     },
 };
-use std::process::exit;
 
-mod session;
+pub mod session;
 
 pub struct AudioController {
     default_device: Option<IMMDevice>,
@@ -26,7 +29,7 @@ pub struct AudioController {
 
 pub enum CoinitMode {
     MultiTreaded,
-    ApartmentThreaded
+    ApartmentThreaded,
 }
 
 impl AudioController {
@@ -34,8 +37,8 @@ impl AudioController {
         let mut coinit: windows::Win32::System::Com::COINIT = COINIT_MULTITHREADED;
         if let Some(x) = coinit_mode {
             match x {
-                CoinitMode::ApartmentThreaded   => {coinit = COINIT_APARTMENTTHREADED},
-                CoinitMode::MultiTreaded        => {coinit = COINIT_MULTITHREADED}
+                CoinitMode::ApartmentThreaded => coinit = COINIT_APARTMENTTHREADED,
+                CoinitMode::MultiTreaded => coinit = COINIT_MULTITHREADED,
             }
         }
         CoInitializeEx(None, coinit).unwrap();
@@ -48,12 +51,10 @@ impl AudioController {
     }
     pub unsafe fn get_sessions(&mut self) {
         self.imm_device_enumerator = Some(
-            CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_INPROC_SERVER).unwrap_or_else(
-                |err| {
-                    eprintln!("ERROR: Couldn't get Media device enumerator: {err}");
-                    exit(1);
-                },
-            ),
+            CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_INPROC_SERVER).unwrap_or_else(|err| {
+                eprintln!("ERROR: Couldn't get Media device enumerator: {err}");
+                exit(1);
+            }),
         );
     }
 
@@ -95,32 +96,32 @@ impl AudioController {
             return;
         }
 
-        let session_manager2: IAudioSessionManager2 = self.default_device.as_ref().unwrap().Activate(CLSCTX_INPROC_SERVER, None).unwrap_or_else(|err| {
-            eprintln!("ERROR: Couldnt get AudioSessionManager for enumerating over processes... {err}");
-            exit(1);
-        });
-
-        let session_enumerator: IAudioSessionEnumerator = session_manager2
-            .GetSessionEnumerator()
+        let session_manager2: IAudioSessionManager2 = self
+            .default_device
+            .as_ref()
+            .unwrap()
+            .Activate(CLSCTX_INPROC_SERVER, None)
             .unwrap_or_else(|err| {
+                eprintln!("ERROR: Couldnt get AudioSessionManager for enumerating over processes... {err}");
+                exit(1);
+            });
+
+        let session_enumerator: IAudioSessionEnumerator =
+            session_manager2.GetSessionEnumerator().unwrap_or_else(|err| {
                 eprintln!("ERROR: Couldnt get session enumerator... {err}");
                 exit(1);
             });
 
         for i in 0..session_enumerator.GetCount().unwrap() {
-            let normal_session_control: Option<IAudioSessionControl> =
-                session_enumerator.GetSession(i).ok();
+            let normal_session_control: Option<IAudioSessionControl> = session_enumerator.GetSession(i).ok();
             if normal_session_control.is_none() {
                 eprintln!("ERROR: Couldn't get session control of audio session...");
                 continue;
             }
 
-            let session_control: Option<IAudioSessionControl2> =
-                normal_session_control.unwrap().cast().ok();
+            let session_control: Option<IAudioSessionControl2> = normal_session_control.unwrap().cast().ok();
             if session_control.is_none() {
-                eprintln!(
-                    "ERROR: Couldn't convert from normal session control to session control 2"
-                );
+                eprintln!("ERROR: Couldn't convert from normal session control to session control 2");
                 continue;
             }
 
@@ -158,9 +159,7 @@ impl AudioController {
             let audio_control: ISimpleAudioVolume = match session_control.unwrap().cast() {
                 Ok(data) => data,
                 Err(err) => {
-                    eprintln!(
-                        "ERROR: Couldn't get the simpleaudiovolume from session controller: {err}"
-                    );
+                    eprintln!("ERROR: Couldn't get the simpleaudiovolume from session controller: {err}");
                     continue;
                 }
             };
@@ -178,10 +177,15 @@ impl AudioController {
     }
 
     pub unsafe fn get_session_by_name(&self, name: String) -> Option<&Box<dyn Session>> {
-        self.sessions.iter().find(|session| session.get_name().to_lowercase() == name.to_lowercase())
+        self.sessions
+            .iter()
+            .find(|session| session.get_name().to_lowercase() == name.to_lowercase())
     }
 
     pub unsafe fn get_all_sessions_by_name(&self, name: String) -> Vec<&Box<dyn Session>> {
-        self.sessions.iter().filter(|session| session.get_name().to_lowercase() == name.to_lowercase()).collect()
+        self.sessions
+            .iter()
+            .filter(|session| session.get_name().to_lowercase() == name.to_lowercase())
+            .collect()
     }
 }
