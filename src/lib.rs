@@ -176,6 +176,10 @@ impl AudioController {
         self.sessions.iter().map(|session| session.get_name()).collect()
     }
 
+    pub unsafe fn get_all_sessions(&self) -> Vec<&Box<dyn Session>> {
+        self.sessions.iter().collect()
+    }
+
     pub unsafe fn get_session_by_name(&self, name: String) -> Option<&Box<dyn Session>> {
         self.sessions.iter().find(|session| session.get_name().to_lowercase() == name.to_lowercase())
     }
