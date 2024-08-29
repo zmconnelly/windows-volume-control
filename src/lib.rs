@@ -38,10 +38,7 @@ impl AudioController {
                 CoinitMode::MultiTreaded        => {coinit = COINIT_MULTITHREADED}
             }
         }
-        CoInitializeEx(None, coinit).unwrap_or_else(|err| {
-            eprintln!("ERROR: Couldn't initialize windows connection: {err}");
-            exit(1);
-        });
+        CoInitializeEx(None, coinit).unwrap();
 
         Self {
             default_device: None,
@@ -137,7 +134,7 @@ impl AudioController {
                 continue;
             }
             let mut filename: [u8; 128] = [0; 128];
-            K32GetProcessImageFileNameA(process, &mut filename);
+            K32GetProcessImageFileNameA(process.unwrap(), &mut filename);
             let mut new_filename: Vec<u8> = vec![];
             for i in filename.iter() {
                 if i == &(0 as u8) {

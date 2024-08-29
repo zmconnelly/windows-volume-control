@@ -1,18 +1,16 @@
 [package]
 name = "windows-volume-control"
-version = "0.1.1"
-homepage = "https://github.com/Waayway/windows-volume-control"
+version = "0.2.0"
+homepage = "https://github.com/zmconnelly/windows-volume-control"
 documentation = "https://docs.rs/windows-volume-control"
-repository = "https://github.com/Waayway/windows-volume-control"
+repository = "https://github.com/zmconnelly/windows-volume-control"
 readme = "README.md"
-description = "A simple library to control audio interfaces from within rust using the windows api"
+description = "A simple library to control audio interfaces from within rust using the windows api. Forked from https://github.com/Waayway/windows-volume-control."
 edition = "2021"
 license = "MIT"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-windows = { version = "0.44.0", features = [
+windows = { version = "0.58.0", features = [
     "implement",
     "Win32_Media_Audio",
     "Win32_System_Com",
