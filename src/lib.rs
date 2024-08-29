@@ -49,7 +49,7 @@ impl AudioController {
             sessions: vec![],
         }
     }
-    pub unsafe fn GetSessions(&mut self) {
+    pub unsafe fn get_sessions(&mut self) {
         self.imm_device_enumerator = Some(
             CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_INPROC_SERVER).unwrap_or_else(
                 |err| {
@@ -60,7 +60,7 @@ impl AudioController {
         );
     }
 
-    pub unsafe fn GetDefaultAudioEnpointVolumeControl(&mut self) {
+    pub unsafe fn get_default_audio_enpoint_volume_control(&mut self) {
         if self.imm_device_enumerator.is_none() {
             eprintln!("ERROR: Function called before creating enumerator");
             return;
@@ -92,7 +92,7 @@ impl AudioController {
         )));
     }
 
-    pub unsafe fn GetAllProcessSessions(&mut self) {
+    pub unsafe fn get_all_process_sessions(&mut self) {
         if self.default_device.is_none() {
             eprintln!("ERROR: Default device hasn't been initialized so the cant find the audio processes...");
             return;
@@ -173,10 +173,14 @@ impl AudioController {
     }
 
     pub unsafe fn get_all_session_names(&self) -> Vec<String> {
-        self.sessions.iter().map(|i| i.getName()).collect()
+        self.sessions.iter().map(|session| session.get_name()).collect()
     }
 
     pub unsafe fn get_session_by_name(&self, name: String) -> Option<&Box<dyn Session>> {
-        self.sessions.iter().find(|i| i.getName() == name)
+        self.sessions.iter().find(|session| session.get_name().to_lowercase() == name.to_lowercase())
+    }
+
+    pub unsafe fn get_all_sessions_by_name(&self, name: String) -> Vec<&Box<dyn Session>> {
+        self.sessions.iter().filter(|session| session.get_name().to_lowercase() == name.to_lowercase()).collect()
     }
 }

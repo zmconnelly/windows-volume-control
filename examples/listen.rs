@@ -16,13 +16,13 @@ impl IAudioEndpointVolumeCallback_Impl for VolumeChangeCallback {
 fn main() {
     unsafe {
         let mut controller = AudioController::init(None);
-        controller.GetSessions();
-        controller.GetDefaultAudioEnpointVolumeControl();
-        controller.GetAllProcessSessions();
+        controller.get_sessions();
+        controller.get_default_audio_enpoint_volume_control();
+        controller.get_all_process_sessions();
 
         let session = controller.get_session_by_name("master".to_string()).unwrap();
 
-        if let Some(session_endpoint_volume) = session.getAudioEndpointVolume() {
+        if let Some(session_endpoint_volume) = session.get_audio_endpoint_volume() {
             let volume_callback: IAudioEndpointVolumeCallback = VolumeChangeCallback {}.into();
             session_endpoint_volume.RegisterControlChangeNotify(&volume_callback).unwrap();
             println!("Initialised audio event listener for session 'master'");
