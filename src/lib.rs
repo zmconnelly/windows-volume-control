@@ -22,8 +22,6 @@ use windows::{
 pub mod session;
 
 pub struct AudioController {
-    default_device: Option<IMMDevice>,
-    imm_device_enumerator: Option<IMMDeviceEnumerator>,
     sessions: Vec<Box<dyn Session>>,
 }
 
@@ -43,29 +41,15 @@ impl AudioController {
         }
         CoInitializeEx(None, coinit).unwrap();
 
-        Self {
-            default_device: None,
-            imm_device_enumerator: None,
-            sessions: vec![],
-        }
-    }
-    pub unsafe fn get_sessions(&mut self) {
-        self.imm_device_enumerator = Some(
+        let device_enumerator: Option<IMMDeviceEnumerator> = Some(
             CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_INPROC_SERVER).unwrap_or_else(|err| {
                 eprintln!("ERROR: Couldn't get Media device enumerator: {err}");
                 exit(1);
             }),
         );
-    }
 
-    pub unsafe fn get_default_audio_enpoint_volume_control(&mut self) {
-        if self.imm_device_enumerator.is_none() {
-            eprintln!("ERROR: Function called before creating enumerator");
-            return;
-        }
-
-        self.default_device = Some(
-            self.imm_device_enumerator
+        let default_device: Option<IMMDevice> = Some(
+            device_enumerator
                 .clone()
                 .unwrap()
                 .GetDefaultAudioEndpoint(eRender, eMultimedia)
@@ -74,8 +58,8 @@ impl AudioController {
                     exit(1);
                 }),
         );
-        let simple_audio_volume: IAudioEndpointVolume = self
-            .default_device
+
+        let simple_audio_volume: IAudioEndpointVolume = default_device
             .clone()
             .unwrap()
             .Activate(CLSCTX_ALL, None)
@@ -84,20 +68,12 @@ impl AudioController {
                 exit(1);
             });
 
-        self.sessions.push(Box::new(EndPointSession::new(
+        let mut sessions: Vec<Box<dyn Session>> = vec![Box::new(EndPointSession::new(
             simple_audio_volume,
             "master".to_string(),
-        )));
-    }
+        ))];
 
-    pub unsafe fn get_all_process_sessions(&mut self) {
-        if self.default_device.is_none() {
-            eprintln!("ERROR: Default device hasn't been initialized so the cant find the audio processes...");
-            return;
-        }
-
-        let session_manager2: IAudioSessionManager2 = self
-            .default_device
+        let session_manager2: IAudioSessionManager2 = default_device
             .as_ref()
             .unwrap()
             .Activate(CLSCTX_INPROC_SERVER, None)
@@ -164,8 +140,10 @@ impl AudioController {
                 }
             };
             let application_session = ApplicationSession::new(audio_control, str_filename);
-            self.sessions.push(Box::new(application_session));
+            sessions.push(Box::new(application_session));
         }
+
+        Self { sessions }
     }
 
     pub unsafe fn get_all_session_names(&self) -> Vec<String> {
