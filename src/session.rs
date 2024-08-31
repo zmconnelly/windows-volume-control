@@ -1,5 +1,5 @@
-use windows::Win32::Foundation::BOOL;
 use windows::core::GUID;
+use windows::Win32::Foundation::BOOL;
 use windows::Win32::Media::Audio::Endpoints::IAudioEndpointVolume;
 use windows::Win32::Media::Audio::ISimpleAudioVolume;
 
@@ -16,7 +16,7 @@ pub trait Session {
 pub struct EndPointSession {
     simple_audio_volume: IAudioEndpointVolume,
     name: String,
-    guid: GUID
+    guid: GUID,
 }
 impl EndPointSession {
     pub fn new(simple_audio_volume: IAudioEndpointVolume, name: String) -> Self {
@@ -28,7 +28,7 @@ impl EndPointSession {
         Self {
             simple_audio_volume: simple_audio_volume,
             name: name,
-            guid: guid
+            guid: guid,
         }
     }
 }
@@ -41,6 +41,7 @@ impl Session for EndPointSession {
     unsafe fn get_name(&self) -> String {
         self.name.clone()
     }
+
     unsafe fn get_volume(&self) -> f32 {
         self.simple_audio_volume
             .GetMasterVolumeLevelScalar()
@@ -49,6 +50,7 @@ impl Session for EndPointSession {
                 0.0
             })
     }
+
     unsafe fn set_volume(&self, vol: f32) {
         self.simple_audio_volume
             .SetMasterVolumeLevelScalar(vol, &self.guid)
@@ -56,13 +58,15 @@ impl Session for EndPointSession {
                 eprintln!("ERROR: Couldn't set volume: {err}");
             });
     }
+
     unsafe fn set_mute(&self, mute: bool) {
         self.simple_audio_volume
             .SetMute(mute, &self.guid)
             .unwrap_or_else(|err| {
                 eprintln!("ERROR: Couldn't set mute: {err}");
-        });
+            });
     }
+
     unsafe fn get_mute(&self) -> bool {
         self.simple_audio_volume
             .GetMute()
@@ -86,7 +90,7 @@ impl ApplicationSession {
             eprintln!("ERROR: Couldn't generate GUID {err}");
             exit(1);
         });
-        
+
         Self {
             simple_audio_volume,
             name,
@@ -103,14 +107,14 @@ impl Session for ApplicationSession {
     unsafe fn get_name(&self) -> String {
         self.name.clone()
     }
+
     unsafe fn get_volume(&self) -> f32 {
-        self.simple_audio_volume
-            .GetMasterVolume()
-            .unwrap_or_else(|err| {
-                eprintln!("ERROR: Couldn't get volume {err}");
-                0.0
-            })
+        self.simple_audio_volume.GetMasterVolume().unwrap_or_else(|err| {
+            eprintln!("ERROR: Couldn't get volume {err}");
+            0.0
+        })
     }
+
     unsafe fn set_volume(&self, vol: f32) {
         self.simple_audio_volume
             .SetMasterVolume(vol, &self.guid)
@@ -118,13 +122,15 @@ impl Session for ApplicationSession {
                 eprintln!("ERROR: Couldn't set volume: {err}");
             });
     }
+
     unsafe fn set_mute(&self, mute: bool) {
         self.simple_audio_volume
             .SetMute(mute, &self.guid)
             .unwrap_or_else(|err| {
                 eprintln!("ERROR: Couldn't set mute: {err}");
-        });
+            });
     }
+
     unsafe fn get_mute(&self) -> bool {
         self.simple_audio_volume
             .GetMute()

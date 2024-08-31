@@ -49,7 +49,15 @@ impl AudioController {
             sessions: vec![],
         }
     }
-    pub unsafe fn get_sessions(&mut self) {
+
+    pub unsafe fn load_current_sessions(&mut self) {
+        self.sessions.clear();
+        self.get_sessions();
+        self.get_default_audio_enpoint_volume_control();
+        self.get_all_process_sessions();
+    }
+
+    unsafe fn get_sessions(&mut self) {
         self.imm_device_enumerator = Some(
             CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_INPROC_SERVER).unwrap_or_else(|err| {
                 eprintln!("ERROR: Couldn't get Media device enumerator: {err}");
@@ -58,7 +66,7 @@ impl AudioController {
         );
     }
 
-    pub unsafe fn get_default_audio_enpoint_volume_control(&mut self) {
+    unsafe fn get_default_audio_enpoint_volume_control(&mut self) {
         if self.imm_device_enumerator.is_none() {
             eprintln!("ERROR: Function called before creating enumerator");
             return;
@@ -90,7 +98,7 @@ impl AudioController {
         )));
     }
 
-    pub unsafe fn get_all_process_sessions(&mut self) {
+    unsafe fn get_all_process_sessions(&mut self) {
         if self.default_device.is_none() {
             eprintln!("ERROR: Default device hasn't been initialized so the cant find the audio processes...");
             return;
@@ -176,13 +184,13 @@ impl AudioController {
         self.sessions.iter().collect()
     }
 
-    pub unsafe fn get_session_by_name(&self, name: String) -> Option<&Box<dyn Session>> {
+    pub unsafe fn get_session_with_name(&self, name: String) -> Option<&Box<dyn Session>> {
         self.sessions
             .iter()
             .find(|session| session.get_name().to_lowercase() == name.to_lowercase())
     }
 
-    pub unsafe fn get_all_sessions_by_name(&self, name: String) -> Vec<&Box<dyn Session>> {
+    pub unsafe fn get_all_sessions_with_name(&self, name: String) -> Vec<&Box<dyn Session>> {
         self.sessions
             .iter()
             .filter(|session| session.get_name().to_lowercase() == name.to_lowercase())
