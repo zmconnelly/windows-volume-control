@@ -1,5 +1,5 @@
 use session::{ApplicationSession, EndPointSession, Session};
-use std::process::exit;
+use std::{ffi::OsString, os::windows::ffi::OsStringExt, process::exit};
 use windows::{
     core::Interface,
     Win32::{
@@ -95,6 +95,7 @@ impl AudioController {
         self.sessions.push(Box::new(EndPointSession::new(
             simple_audio_volume,
             "master".to_string(),
+            0,
         )));
     }
 
@@ -171,7 +172,7 @@ impl AudioController {
                     continue;
                 }
             };
-            let application_session = ApplicationSession::new(audio_control, str_filename);
+            let application_session = ApplicationSession::new(audio_control, str_filename, pid);
             self.sessions.push(Box::new(application_session));
         }
     }

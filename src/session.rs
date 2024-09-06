@@ -11,15 +11,17 @@ pub trait Session {
     unsafe fn set_volume(&self, vol: f32);
     unsafe fn get_mute(&self) -> bool;
     unsafe fn set_mute(&self, mute: bool);
+    unsafe fn get_pid(&self) -> u32;
 }
 
 pub struct EndPointSession {
     simple_audio_volume: IAudioEndpointVolume,
     name: String,
     guid: GUID,
+    pid: u32,
 }
 impl EndPointSession {
-    pub fn new(simple_audio_volume: IAudioEndpointVolume, name: String) -> Self {
+    pub fn new(simple_audio_volume: IAudioEndpointVolume, name: String, pid: u32) -> Self {
         let guid = GUID::new().unwrap_or_else(|err| {
             eprintln!("ERROR: Couldn't generate GUID {err}");
             exit(1);
@@ -29,6 +31,7 @@ impl EndPointSession {
             simple_audio_volume: simple_audio_volume,
             name: name,
             guid: guid,
+            pid: pid,
         }
     }
 }
@@ -76,16 +79,21 @@ impl Session for EndPointSession {
             })
             .as_bool()
     }
+
+    unsafe fn get_pid(&self) -> u32 {
+        self.pid
+    }
 }
 
 pub struct ApplicationSession {
     simple_audio_volume: ISimpleAudioVolume,
     name: String,
     guid: GUID,
+    pid: u32,
 }
 
 impl ApplicationSession {
-    pub fn new(simple_audio_volume: ISimpleAudioVolume, name: String) -> Self {
+    pub fn new(simple_audio_volume: ISimpleAudioVolume, name: String, pid: u32) -> Self {
         let guid = GUID::new().unwrap_or_else(|err| {
             eprintln!("ERROR: Couldn't generate GUID {err}");
             exit(1);
@@ -95,6 +103,7 @@ impl ApplicationSession {
             simple_audio_volume,
             name,
             guid,
+            pid,
         }
     }
 }
@@ -139,5 +148,9 @@ impl Session for ApplicationSession {
                 BOOL(0)
             })
             .as_bool()
+    }
+
+    unsafe fn get_pid(&self) -> u32 {
+        self.pid
     }
 }

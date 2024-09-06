@@ -18,7 +18,13 @@ fn main() {
 
         let all_sessions = controller.get_all_sessions();
         for session in all_sessions {
-            println!("Session: {} Volume: {}", session.get_name(), session.get_volume());
+            println!(
+                "Session: {} Volume: {} Mute: {} PID: {}",
+                session.get_name(),
+                session.get_volume(),
+                session.get_mute(),
+                session.get_pid()
+            );
         }
     }
 }
